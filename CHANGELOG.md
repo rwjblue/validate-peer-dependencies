@@ -1,3 +1,19 @@
+## v1.1.0 (2020-10-20)
+
+#### :rocket: Enhancement
+* [#8](https://github.com/rwjblue/validate-peer-dependencies/pull/8) Add support for peerDependenciesMeta. ([@rwjblue](https://github.com/rwjblue))
+* [#4](https://github.com/rwjblue/validate-peer-dependencies/pull/4) Add `resolvePeerDependenciesFrom` option. ([@rwjblue](https://github.com/rwjblue))
+
+#### :bug: Bug Fix
+* [#6](https://github.com/rwjblue/validate-peer-dependencies/pull/6) Error for any packages in peerDependencies **and** dependencies ([@rwjblue](https://github.com/rwjblue))
+
+#### :house: Internal
+* [#7](https://github.com/rwjblue/validate-peer-dependencies/pull/7) Remove copy/paste mistakes in test harness. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
+
 ## v1.0.0 (2020-10-20)
 
 #### :rocket: Enhancement
