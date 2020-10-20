@@ -2,6 +2,7 @@
 
 const resolvePackagePath = require('resolve-package-path');
 const semver = require('semver');
+const path = require('path');
 
 // avoid checking multiple times from the same location
 const HasPeerDepsInstalled = new Map();
@@ -78,12 +79,25 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
 
   let pkg = require(packagePath);
   let { peerDependencies } = pkg;
+  let dependencies = pkg.dependencies || {};
 
   // lazily created as needed
   let missingPeerDependencies = null;
   let incompatibleRanges = null;
+  let invalidPackageConfiguration = null;
 
   for (let packageName in peerDependencies) {
+    if (packageName in dependencies) {
+      if (invalidPackageConfiguration === null) {
+        invalidPackageConfiguration = [];
+      }
+
+      invalidPackageConfiguration.push({
+        name: packageName,
+        reason: 'included both as dependency and as a peer dependency',
+      });
+    }
+
     //   foo-package: >= 1.9.0 < 2.0.0
     //   foo-package: >= 1.9.0
     //   foo-package: ^1.9.0
@@ -127,17 +141,34 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     }
   }
 
-  let found = missingPeerDependencies === null && incompatibleRanges === null;
+  if (invalidPackageConfiguration !== null) {
+    // intentionally throwing an error here (not going through `handleFailure`) because
+    // this represents a problem with the including package itself that should not be
+    // squelchable by a custom `handleFailure`
+    let invalidPackageConfigurationMessage = invalidPackageConfiguration.reduce(
+      (message, metadata) =>
+        `${message}\n\t* ${metadata.name}: ${metadata.reason}`,
+      ''
+    );
+
+    let relativePath = path.relative(process.cwd(), parentRoot);
+
+    throw new Error(
+      `${pkg.name} (at \`./${relativePath}\`) is improperly configured:\n${invalidPackageConfigurationMessage}`
+    );
+  }
+
+  let isValid = missingPeerDependencies === null && incompatibleRanges === null;
 
   let result;
-  if (found) {
+  if (isValid) {
     result = true;
   } else {
     result = {
       pkg,
       packagePath,
-      missingPeerDependencies,
       incompatibleRanges,
+      missingPeerDependencies,
     };
   }
 
