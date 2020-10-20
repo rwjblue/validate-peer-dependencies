@@ -50,6 +50,33 @@ test-app has the following unmet peerDependencies:
   * foo: `> 1`; it was resolved to `1.0.0`
 ```
 
+## Known Issues
+
+There are no known scenarios where `validate-peer-dependencies` will flag a
+peer dependency as missing, when it really is present. However, there are a few known
+problem case where `validate-peer-dependencies` cannot properly validate that a
+peer dependency is installed (where a error will not be thrown but it should have been):
+
+To illustrate, let's use the following setup:
+
+* Package `parent` depends on `child` and `sibling`
+* Package `child` has a dev dependency (for local development) and a peer
+  dependency on `sibling` package
+* Package `child` uses `validate-peer-dependencies` to confirm that `sibling` is
+  provided
+
+In this case, if `child` has been linked locally (e.g. `npm link`/`yarn link`) into `parent`
+when `validate-peer-dependencies` is ran it will incorrectly believe that `parent` has satisfied
+the contract, but in fact it _may_ not have. This is a smallish edge case, but still a possible
+issue.
+
+These known issues are mitigated by passing in the
+`resolvePeerDependenciesFrom` with the root directory of `parent`. As noted in
+the documentation for that option below, you often do not have access to the
+correct value for `resolvePeerDependenciesFrom` but in some ecosystems (e.g.
+ember-cli addons) you **do**. In scenarios where you can use it, you
+**absolutely** should.
+
 ### Options
 
 A few custom options are available for use:
