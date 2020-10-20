@@ -64,6 +64,27 @@ describe('validate-peer-dependencies', function () {
     `);
   });
 
+  it('throws an error when peerDependencies that are optional are present but at the wrong version', () => {
+    project.pkg.peerDependencies = {
+      foo: '> 1',
+    };
+    project.pkg.peerDependenciesMeta = {
+      foo: {
+        optional: true,
+      },
+    };
+
+    project.addDevDependency('foo', '1.0.0');
+    project.writeSync();
+
+    expect(() => validatePeerDependencies(project.baseDir))
+      .toThrowErrorMatchingInlineSnapshot(`
+      "test-app has the following unmet peerDependencies:
+
+      	* foo: \`> 1\`; it was resolved to \`1.0.0\`"
+    `);
+  });
+
   it('throws if some peerDependencies are met and others are missing', () => {
     project.pkg.peerDependencies = {
       foo: '> 1',
@@ -123,6 +144,22 @@ describe('validate-peer-dependencies', function () {
     };
 
     project.addDevDependency('foo', '1.0.0');
+    project.writeSync();
+
+    validatePeerDependencies(project.baseDir);
+  });
+
+  it('does not throw when peerDependencies are optional', () => {
+    project.pkg.peerDependencies = {
+      foo: '>= 1',
+    };
+
+    project.pkg.peerDependenciesMeta = {
+      foo: {
+        optional: true,
+      },
+    };
+
     project.writeSync();
 
     validatePeerDependencies(project.baseDir);
