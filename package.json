@@ -10,6 +10,9 @@
     "test": "npm-run-all lint test:jest",
     "test:jest": "jest"
   },
+  "files": [
+    "index.js"
+  ],
   "devDependencies": {
     "eslint": "^7.11.0",
     "eslint-config-prettier": "^6.13.0",
