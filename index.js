@@ -78,8 +78,9 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
   }
 
   let pkg = require(packagePath);
-  let { peerDependencies } = pkg;
-  let dependencies = pkg.dependencies || {};
+  let { dependencies, peerDependencies, peerDependenciesMeta } = pkg;
+  let hasDependencies = Boolean(dependencies);
+  let hasPeerDependenciesMeta = Boolean(peerDependenciesMeta);
 
   // lazily created as needed
   let missingPeerDependencies = null;
@@ -87,7 +88,7 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
   let invalidPackageConfiguration = null;
 
   for (let packageName in peerDependencies) {
-    if (packageName in dependencies) {
+    if (hasDependencies && packageName in dependencies) {
       if (invalidPackageConfiguration === null) {
         invalidPackageConfiguration = [];
       }
@@ -108,7 +109,16 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
       resolvePeerDependenciesFrom,
       cache === NullCache ? false : undefined
     );
+
     if (peerDepPackagePath === null) {
+      if (
+        hasPeerDependenciesMeta &&
+        packageName in peerDependenciesMeta &&
+        peerDependenciesMeta[packageName].optional
+      ) {
+        continue;
+      }
+
       if (missingPeerDependencies === null) {
         missingPeerDependencies = [];
       }
