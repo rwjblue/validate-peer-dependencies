@@ -134,6 +134,55 @@ describe('validate-peer-dependencies', function () {
     validatePeerDependencies(path.join(project.baseDir, 'package.json'));
   });
 
+  describe('resolvePeerDependenciesFrom', () => {
+    it('when resolvePeerDependenciesFrom is provided the cached results are independent of usages without resolvePeerDependenciesFrom for the same parentRoot', () => {
+      let linkedPackage = new Project('foo');
+
+      try {
+        linkedPackage.pkg.peerDependencies = {
+          bar: '^1.0.0',
+        };
+        linkedPackage.writeSync();
+
+        project.addDevDependency('bar', '1.0.0');
+        project.writeSync();
+
+        validatePeerDependencies(linkedPackage.baseDir, {
+          resolvePeerDependenciesFrom: project.baseDir,
+        });
+
+        expect(() => validatePeerDependencies(linkedPackage.baseDir))
+          .toThrowErrorMatchingInlineSnapshot(`
+          "foo has the following unmet peerDependencies:
+
+          	* bar: \`^1.0.0\`; it was not installed"
+        `);
+      } finally {
+        linkedPackage.dispose();
+      }
+    });
+
+    it('can provide custom base directory for peerDependency resolution (for linking situations)', () => {
+      let linkedPackage = new Project('foo');
+
+      try {
+        linkedPackage.pkg.peerDependencies = {
+          bar: '^1.0.0',
+        };
+        linkedPackage.writeSync();
+
+        project.addDevDependency('bar', '1.0.0');
+        project.writeSync();
+
+        validatePeerDependencies(linkedPackage.baseDir, {
+          resolvePeerDependenciesFrom: project.baseDir,
+        });
+      } finally {
+        linkedPackage.dispose();
+      }
+    });
+  });
+
   describe('caching', () => {
     it('caches failure to find package.json from parentRoot by default', () => {
       expect(() => {

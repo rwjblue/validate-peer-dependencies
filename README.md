@@ -50,12 +50,40 @@ test-app has the following unmet peerDependencies:
   * foo: `> 1`; it was resolved to `1.0.0`
 ```
 
+## Known Issues
+
+There are no known scenarios where `validate-peer-dependencies` will flag a
+peer dependency as missing, when it really is present. However, there are a few known
+problem case where `validate-peer-dependencies` cannot properly validate that a
+peer dependency is installed (where a error will not be thrown but it should have been):
+
+To illustrate, let's use the following setup:
+
+* Package `parent` depends on `child` and `sibling`
+* Package `child` has a dev dependency (for local development) and a peer
+  dependency on `sibling` package
+* Package `child` uses `validate-peer-dependencies` to confirm that `sibling` is
+  provided
+
+In this case, if `child` has been linked locally (e.g. `npm link`/`yarn link`) into `parent`
+when `validate-peer-dependencies` is ran it will incorrectly believe that `parent` has satisfied
+the contract, but in fact it _may_ not have. This is a smallish edge case, but still a possible
+issue.
+
+These known issues are mitigated by passing in the
+`resolvePeerDependenciesFrom` with the root directory of `parent`. As noted in
+the documentation for that option below, you often do not have access to the
+correct value for `resolvePeerDependenciesFrom` but in some ecosystems (e.g.
+ember-cli addons) you **do**. In scenarios where you can use it, you
+**absolutely** should.
+
 ### Options
 
 A few custom options are available for use:
 
 * `cache` - Can be `false` to disable caching, or a `Map` instance to use your own custom cache
 * `handleFailure` - A callback function that will be invoked if validation fails
+* `resolvePeerDependenciesFrom` - The path that should be used as the starting point for resolving `peerDependencies` from
 
 #### `cache`
 
@@ -71,6 +99,54 @@ validatePeerDependencies(__dirname, { cache: false });
 // instruct caching system to leverage your own cache
 const cache = new Map();
 validatePeerDependencies(__dirname, { cache });
+```
+
+#### `resolvePeerDependenciesFrom`
+
+Pass this option if you **know** the base directory (the dir containing the
+`package.json`) that should be used as the starting point of peer dependency
+resolution.
+
+For example, given the following dependencies:
+
+* Package `parent` depends on `child` and `sibling`
+* Package `child` has a peer dependency on `sibling` package
+* Package `child` uses `validate-peer-dependencies` to confirm that `sibling` is
+  provided
+
+_Most_ of the time in the Node ecosystem you can not actually know the path to
+`parent` (it could be hoisted / deduplicated to any number of possible
+locations), but in some (some what special) circumstances you can. For example,
+in the `ember-cli` addon ecosystem an addon is instantiated with access to the
+root path of the package that included it (`parent` in the example above).
+
+The main benefit of specifying `resolvePeerDependenciesFrom` is that while
+locally developing `child` you might `npm link`/`yarn link` it into `parent`
+manually. In that case the default behavior (using the directory that contains
+`child`'s `package.json`) is not correct! When linking (and not specifying
+`resolvePeerDependenciesFrom`) the invocation to `validatePeerDependencies`
+would **always** find the peer dependencies (even if the `parent` didn't have
+them installed) because the locally linked copy of `child` would have specified
+them in its `devDependencies` and therefore the peer dependency would be
+resolvable from `child`'s on disk location.
+
+Here is an example of what usage by an ember-cli addon would look like:
+
+```js
+'use strict';
+
+const validatePeerDependencies = require('validate-peer-dependencies');
+
+module.exports = {
+  // ...snip...
+  init() {
+    this._super.init.apply(this, arguments);
+
+    validatePeerDependencies(__dirname, {
+      resolvePeerDependenciesFrom: this.parent.root,
+    });
+  }
+};
 ```
 
 #### `handleFailure`

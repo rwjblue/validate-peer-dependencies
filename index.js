@@ -37,7 +37,7 @@ function throwUsefulError(result) {
 }
 
 module.exports = function validatePeerDependencies(parentRoot, options = {}) {
-  let { cache, handleFailure } = options;
+  let { cache, handleFailure, resolvePeerDependenciesFrom } = options;
 
   if (cache === false) {
     cache = NullCache;
@@ -49,8 +49,16 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     handleFailure = throwUsefulError;
   }
 
-  if (cache.has(parentRoot)) {
-    let result = cache.get(parentRoot);
+  let cacheKey = parentRoot;
+
+  if (resolvePeerDependenciesFrom === undefined) {
+    resolvePeerDependenciesFrom = parentRoot;
+  } else {
+    cacheKey += `\0${resolvePeerDependenciesFrom}`;
+  }
+
+  if (cache.has(cacheKey)) {
+    let result = cache.get(cacheKey);
     if (result !== true) {
       handleFailure(result);
     }
@@ -83,7 +91,7 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
 
     let peerDepPackagePath = resolvePackagePath(
       packageName,
-      parentRoot,
+      resolvePeerDependenciesFrom,
       cache === NullCache ? false : undefined
     );
     if (peerDepPackagePath === null) {
@@ -133,7 +141,7 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     };
   }
 
-  cache.set(parentRoot, result);
+  cache.set(cacheKey, result);
 
   if (result !== true) {
     handleFailure(result);
