@@ -1,6 +1,6 @@
 {
   "name": "validate-peer-dependencies",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Validate that the peerDependencies of a given package.json have been satisfied.",
   "repository": {
     "type": "git",
