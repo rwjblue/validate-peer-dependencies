@@ -1,4 +1,3 @@
-const path = require('path');
 const Project = require('fixturify-project');
 const validatePeerDependencies = require('./index');
 
@@ -24,9 +23,8 @@ describe('validate-peer-dependencies', function () {
 
     project.writeSync();
 
-    expect(() =>
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'))
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => validatePeerDependencies(project.baseDir))
+      .toThrowErrorMatchingInlineSnapshot(`
       "test-app has the following unmet peerDependencies:
 
       	* foo: \`> 1\`; it was not installed"
@@ -58,9 +56,8 @@ describe('validate-peer-dependencies', function () {
     project.addDevDependency('foo', '1.0.0');
     project.writeSync();
 
-    expect(() =>
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'))
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => validatePeerDependencies(project.baseDir))
+      .toThrowErrorMatchingInlineSnapshot(`
       "test-app has the following unmet peerDependencies:
 
       	* foo: \`> 1\`; it was resolved to \`1.0.0\`"
@@ -76,9 +73,8 @@ describe('validate-peer-dependencies', function () {
     project.addDevDependency('foo', '2.0.0');
     project.writeSync();
 
-    expect(() =>
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'))
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => validatePeerDependencies(project.baseDir))
+      .toThrowErrorMatchingInlineSnapshot(`
       "test-app has the following unmet peerDependencies:
 
       	* bar: \`>= 2\`; it was not installed"
@@ -95,9 +91,8 @@ describe('validate-peer-dependencies', function () {
     project.addDevDependency('bar', '1.0.0');
     project.writeSync();
 
-    expect(() =>
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'))
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => validatePeerDependencies(project.baseDir))
+      .toThrowErrorMatchingInlineSnapshot(`
       "test-app has the following unmet peerDependencies:
 
       	* bar: \`>= 2\`; it was resolved to \`1.0.0\`"
@@ -113,9 +108,8 @@ describe('validate-peer-dependencies', function () {
     project.addDevDependency('foo', '1.0.0');
     project.writeSync();
 
-    expect(() =>
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'))
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => validatePeerDependencies(project.baseDir))
+      .toThrowErrorMatchingInlineSnapshot(`
       "test-app has the following unmet peerDependencies:
 
       	* bar: \`>= 2\`; it was not installed
@@ -131,7 +125,7 @@ describe('validate-peer-dependencies', function () {
     project.addDevDependency('foo', '1.0.0');
     project.writeSync();
 
-    validatePeerDependencies(path.join(project.baseDir, 'package.json'));
+    validatePeerDependencies(project.baseDir);
   });
 
   it('errors with a helpful message when the provided project root does not contain a package.json', () => {
@@ -152,7 +146,7 @@ describe('validate-peer-dependencies', function () {
     project.addDevDependency('bar', '2.1.0-alpha.1');
     project.writeSync();
 
-    validatePeerDependencies(path.join(project.baseDir, 'package.json'));
+    validatePeerDependencies(project.baseDir);
   });
 
   describe('resolvePeerDependenciesFrom', () => {
@@ -232,14 +226,14 @@ describe('validate-peer-dependencies', function () {
       project.addDevDependency('foo', '1.0.0');
       project.writeSync();
 
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'));
+      validatePeerDependencies(project.baseDir);
 
       // TODO: expose a public API to fixturify-project to remove deps/devDeps?
       delete project._devDependencies.foo;
       project.writeSync();
 
       // does not error because it was cached
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'));
+      validatePeerDependencies(project.baseDir);
     });
 
     it('caches failures by default', () => {
@@ -249,9 +243,8 @@ describe('validate-peer-dependencies', function () {
 
       project.writeSync();
 
-      expect(() =>
-        validatePeerDependencies(path.join(project.baseDir, 'package.json'))
-      ).toThrowErrorMatchingInlineSnapshot(`
+      expect(() => validatePeerDependencies(project.baseDir))
+        .toThrowErrorMatchingInlineSnapshot(`
         "test-app has the following unmet peerDependencies:
 
         	* foo: \`>= 1\`; it was not installed"
@@ -260,9 +253,8 @@ describe('validate-peer-dependencies', function () {
       project.addDevDependency('foo', '1.0.0');
       project.writeSync();
 
-      expect(() =>
-        validatePeerDependencies(path.join(project.baseDir, 'package.json'))
-      ).toThrowErrorMatchingInlineSnapshot(`
+      expect(() => validatePeerDependencies(project.baseDir))
+        .toThrowErrorMatchingInlineSnapshot(`
         "test-app has the following unmet peerDependencies:
 
         	* foo: \`>= 1\`; it was not installed"
@@ -277,7 +269,7 @@ describe('validate-peer-dependencies', function () {
       project.writeSync();
 
       expect(() =>
-        validatePeerDependencies(path.join(project.baseDir, 'package.json'), {
+        validatePeerDependencies(project.baseDir, {
           cache: false,
         })
       ).toThrowErrorMatchingInlineSnapshot(`
@@ -289,7 +281,7 @@ describe('validate-peer-dependencies', function () {
       project.addDevDependency('foo', '1.0.0');
       project.writeSync();
 
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'));
+      validatePeerDependencies(project.baseDir);
     });
 
     it('provide its own cache', () => {
@@ -301,7 +293,7 @@ describe('validate-peer-dependencies', function () {
       project.writeSync();
 
       expect(() =>
-        validatePeerDependencies(path.join(project.baseDir, 'package.json'), {
+        validatePeerDependencies(project.baseDir, {
           cache,
         })
       ).toThrowErrorMatchingInlineSnapshot(`
@@ -326,7 +318,7 @@ describe('validate-peer-dependencies', function () {
       project.addDevDependency('bar', '1.0.0');
       project.writeSync();
 
-      validatePeerDependencies(path.join(project.baseDir, 'package.json'), {
+      validatePeerDependencies(project.baseDir, {
         handleFailure(result) {
           expect(result).toMatchInlineSnapshot(
             {
