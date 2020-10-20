@@ -2,6 +2,8 @@ const path = require('path');
 const Project = require('fixturify-project');
 const validatePeerDependencies = require('./index');
 
+const ROOT = process.cwd();
+
 describe('validate-peer-dependencies', function () {
   let project;
 
@@ -9,8 +11,10 @@ describe('validate-peer-dependencies', function () {
     project = new Project('test-app');
   });
 
-  afterEach(() => {
-    project.dispose();
+  afterEach(async () => {
+    await project.dispose();
+
+    process.chdir(ROOT);
   });
 
   it('throws an error when peerDependencies are not present', () => {
@@ -26,6 +30,23 @@ describe('validate-peer-dependencies', function () {
       "test-app has the following unmet peerDependencies:
 
       	* foo: \`> 1\`; it was not installed"
+    `);
+  });
+
+  it('throws an error when an entry is in peerDependencies **and** in dependencies', () => {
+    project.pkg.peerDependencies = {
+      foo: '>= 1',
+    };
+    project.addDependency('foo', '1.0.0');
+    project.writeSync();
+
+    process.chdir(project.root);
+
+    expect(() => validatePeerDependencies(project.baseDir))
+      .toThrowErrorMatchingInlineSnapshot(`
+      "test-app (at \`./test-app\`) is improperly configured:
+
+      	* foo: included both as dependency and as a peer dependency"
     `);
   });
 
