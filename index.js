@@ -57,15 +57,23 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     return;
   }
 
-  let packagePath = resolvePackagePath.findUpPackagePath(parentRoot);
+  let packagePath = resolvePackagePath.findUpPackagePath(
+    parentRoot,
+    cache === NullCache ? false : undefined
+  );
 
-  // TODO: validate packagePath here and give a good error message
+  if (packagePath === null) {
+    throw new Error(
+      `validate-peer-dependencies could not find a package.json when resolving upwards from:\n\t${parentRoot}.`
+    );
+  }
+
   let pkg = require(packagePath);
   let { peerDependencies } = pkg;
 
   // lazily created as needed
-  let missingPeerDependencies;
-  let incompatibleRanges;
+  let missingPeerDependencies = null;
+  let incompatibleRanges = null;
 
   for (let packageName in peerDependencies) {
     //   foo-package: >= 1.9.0 < 2.0.0
@@ -73,9 +81,13 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     let specifiedPeerDependencyRange = peerDependencies[packageName];
 
     // TODO: introduce ban for `^1.9.0` (non ">=" style ranges)
-    let peerDepPackagePath = resolvePackagePath(packageName, parentRoot);
+    let peerDepPackagePath = resolvePackagePath(
+      packageName,
+      parentRoot,
+      cache === NullCache ? false : undefined
+    );
     if (peerDepPackagePath === null) {
-      if (missingPeerDependencies === undefined) {
+      if (missingPeerDependencies === null) {
         missingPeerDependencies = [];
       }
 
@@ -89,14 +101,13 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
 
     let foundPkg = require(peerDepPackagePath);
     if (!semver.satisfies(foundPkg.version, specifiedPeerDependencyRange)) {
-      if (incompatibleRanges === undefined) {
+      if (incompatibleRanges === null) {
         incompatibleRanges = [];
       }
 
       incompatibleRanges.push({
         name: packageName,
         version: foundPkg.version,
-        path: peerDepPackagePath,
         specifiedPeerDependencyRange,
       });
 
@@ -104,8 +115,7 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     }
   }
 
-  let found =
-    missingPeerDependencies.length === 0 && incompatibleRanges.length === 0;
+  let found = missingPeerDependencies === null && incompatibleRanges === null;
 
   let result;
   if (found) {
