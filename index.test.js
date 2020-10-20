@@ -121,7 +121,18 @@ describe('validate-peer-dependencies', function () {
     );
   });
 
-  it.todo('bans usage of versions _like_ `^3.22.0`');
+  it('allows prerelease ranges that are greater than the specified set', () => {
+    project.pkg.peerDependencies = {
+      foo: '>= 1',
+      bar: '^2.0.0',
+    };
+
+    project.addDevDependency('foo', '1.1.0-beta.1');
+    project.addDevDependency('bar', '2.1.0-alpha.1');
+    project.writeSync();
+
+    validatePeerDependencies(path.join(project.baseDir, 'package.json'));
+  });
 
   describe('caching', () => {
     it('caches failure to find package.json from parentRoot by default', () => {

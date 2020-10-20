@@ -78,9 +78,9 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
   for (let packageName in peerDependencies) {
     //   foo-package: >= 1.9.0 < 2.0.0
     //   foo-package: >= 1.9.0
+    //   foo-package: ^1.9.0
     let specifiedPeerDependencyRange = peerDependencies[packageName];
 
-    // TODO: introduce ban for `^1.9.0` (non ">=" style ranges)
     let peerDepPackagePath = resolvePackagePath(
       packageName,
       parentRoot,
@@ -100,7 +100,11 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     }
 
     let foundPkg = require(peerDepPackagePath);
-    if (!semver.satisfies(foundPkg.version, specifiedPeerDependencyRange)) {
+    if (
+      !semver.satisfies(foundPkg.version, specifiedPeerDependencyRange, {
+        includePrerelease: true,
+      })
+    ) {
       if (incompatibleRanges === null) {
         incompatibleRanges = [];
       }
