@@ -1,5 +1,6 @@
 const Project = require('fixturify-project');
 const validatePeerDependencies = require('./index');
+const { assumeProvided, _resetAssumptions } = validatePeerDependencies;
 
 const ROOT = process.cwd();
 
@@ -396,5 +397,124 @@ describe('validate-peer-dependencies', function () {
         },
       });
     });
+  });
+});
+
+describe('assumeProvided', function () {
+  let project;
+
+  beforeEach(() => {
+    project = new Project('test-app');
+  });
+
+  afterEach(async () => {
+    _resetAssumptions();
+    await project.dispose();
+
+    process.chdir(ROOT);
+  });
+
+  it('throws if passed an object that lacks either name or version', function () {
+    expect(() => assumeProvided()).toThrowErrorMatchingInlineSnapshot(
+      `"assumeProvided({ name, version}): name and version are required, but name='undefined' version='undefined'"`
+    );
+
+    expect(() =>
+      assumeProvided({ name: 'best package' })
+    ).toThrowErrorMatchingInlineSnapshot(
+      `"assumeProvided({ name, version}): name and version are required, but name='best package' version='undefined'"`
+    );
+
+    expect(() =>
+      assumeProvided({ version: '5.0.1' })
+    ).toThrowErrorMatchingInlineSnapshot(
+      `"assumeProvided({ name, version}): name and version are required, but name='undefined' version='5.0.1'"`
+    );
+  });
+
+  it('can be used to provide satisfy missing peer dependencies', function () {
+    project.pkg.peerDependencies = {
+      foo: '> 1',
+    };
+
+    project.writeSync();
+
+    expect(() => validatePeerDependencies(project.baseDir, { cache: false }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      "test-app has the following unmet peerDependencies:
+
+      	* foo: \`> 1\`; it was not installed"
+    `);
+
+    assumeProvided({
+      name: 'foo',
+      version: '2.0.0',
+    });
+
+    // now it doesn't throw
+    validatePeerDependencies(project.baseDir, { cache: false });
+  });
+
+  it('uses the last value provided', function () {
+    project.pkg.peerDependencies = {
+      foo: '> 1',
+    };
+
+    project.writeSync();
+
+    assumeProvided({
+      name: 'foo',
+      version: '0.5.0',
+    });
+
+    assumeProvided({
+      name: 'foo',
+      version: '2.0.0',
+    });
+
+    validatePeerDependencies(project.baseDir);
+  });
+
+  it('supersedes resolution', function () {
+    project.pkg.peerDependencies = {
+      foo: '>= 1',
+    };
+
+    project.addDevDependency('foo', '1.0.0');
+    project.writeSync();
+
+    validatePeerDependencies(project.baseDir, { cache: false });
+
+    assumeProvided({
+      name: 'foo',
+      version: '0.5.0',
+    });
+
+    // the assumption takes priority over anything resolvable, so now we
+    // consider the peer dependency unmet
+    expect(() => validatePeerDependencies(project.baseDir, { cache: false }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      "test-app has the following unmet peerDependencies:
+
+      	* foo: \`>= 1\`; it was resolved to \`0.5.0\`"
+    `);
+  });
+
+  it('does not prevent other peer dependencies from being validated', function () {
+    project.pkg.peerDependencies = {
+      foo: '>= 1',
+      bar: '> 41',
+    };
+
+    project.addDevDependency('foo', '1.0.0');
+    project.writeSync();
+
+    assumeProvided({
+      name: 'bar',
+      version: '42.0.1',
+    });
+
+    // making assumptions about bar does not interfere with resolving foo
+    validatePeerDependencies(project.baseDir, { cache: false });
   });
 });

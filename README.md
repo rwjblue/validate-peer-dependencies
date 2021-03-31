@@ -50,7 +50,7 @@ test-app has the following unmet peerDependencies:
   * foo: `> 1`; it was resolved to `1.0.0`
 ```
 
-## Known Issues
+### Known Issues
 
 There are no known scenarios where `validate-peer-dependencies` will flag a
 peer dependency as missing, when it really is present. However, there are a few known
@@ -248,6 +248,24 @@ validatePeerDependencies(__dirname, {
   },
 });
 ```
+
+### assumeProvided
+
+It is sometimes desirable to treat a peer dependency as satisfied even when it would not be considered satisfied under the node resolution algorithm.
+
+For example an ember addon may consider itself to satisfy the peer dependency requirements of one of its own dev dependencies during local development.
+
+```js
+const assumeProvided = require('validate-peer-depencies').assumeProvided;
+
+// subsequent calls to validatePeerDependencies will assume some-package is available and will resolve to version 1.2.3
+assumeProvided({ name: 'some-package', version: '1.2.3' });
+
+// for the more common case of the package assuming itself to be available during development, the following is the likely preferred invocation
+assumeProvided(require('./package.json'));
+```
+
+Note that assumptions are global, since peer dependency validation may be occurring in different instances of `validate-peer-dependencies`.
 
 ## License
 
