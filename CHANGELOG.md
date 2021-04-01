@@ -1,3 +1,11 @@
+## v1.2.0 (2021-04-01)
+
+#### :rocket: Enhancement
+* [#9](https://github.com/rwjblue/validate-peer-dependencies/pull/9) Add assumeProvided ([@hjdivad](https://github.com/hjdivad))
+
+#### Committers: 1
+- David J. Hamilton ([@hjdivad](https://github.com/hjdivad))
+
 ## v1.1.0 (2020-10-20)
 
 #### :rocket: Enhancement
