@@ -37,6 +37,29 @@ function throwUsefulError(result) {
   );
 }
 
+function resolvePackageVersion(
+  packageName,
+  resolvePeerDependenciesFrom,
+  cache
+) {
+  let assumedVersion = AssumptionMap.get(packageName);
+  if (assumedVersion !== undefined) {
+    return assumedVersion;
+  }
+
+  let peerDepPackagePath = resolvePackagePath(
+    packageName,
+    resolvePeerDependenciesFrom,
+    cache === NullCache ? false : undefined
+  );
+
+  if (peerDepPackagePath === null) {
+    return null;
+  }
+
+  return require(peerDepPackagePath).version;
+}
+
 module.exports = function validatePeerDependencies(parentRoot, options = {}) {
   let { cache, handleFailure, resolvePeerDependenciesFrom } = options;
 
@@ -104,13 +127,13 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     //   foo-package: ^1.9.0
     let specifiedPeerDependencyRange = peerDependencies[packageName];
 
-    let peerDepPackagePath = resolvePackagePath(
+    let foundPackageVersion = resolvePackageVersion(
       packageName,
       resolvePeerDependenciesFrom,
-      cache === NullCache ? false : undefined
+      cache
     );
 
-    if (peerDepPackagePath === null) {
+    if (foundPackageVersion === null) {
       if (
         hasPeerDependenciesMeta &&
         packageName in peerDependenciesMeta &&
@@ -131,9 +154,8 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
       continue;
     }
 
-    let foundPkg = require(peerDepPackagePath);
     if (
-      !semver.satisfies(foundPkg.version, specifiedPeerDependencyRange, {
+      !semver.satisfies(foundPackageVersion, specifiedPeerDependencyRange, {
         includePrerelease: true,
       })
     ) {
@@ -143,7 +165,7 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
 
       incompatibleRanges.push({
         name: packageName,
-        version: foundPkg.version,
+        version: foundPackageVersion,
         specifiedPeerDependencyRange,
       });
 
@@ -189,6 +211,24 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
   }
 };
 
+let AssumptionMapName = '__ValidatePeerDependenciesAssumeProvided';
+if (!(AssumptionMapName in global)) {
+  global[AssumptionMapName] = new Map();
+}
+
+// make sure to re-use the map created by a different instance of
+// validate-peer-dependencies
+let AssumptionMap = global[AssumptionMapName];
+
+module.exports.assumeProvided = function ({ name, version } = {}) {
+  if (name === undefined || version === undefined) {
+    throw new Error(
+      `assumeProvided({ name, version}): name and version are required, but name='${name}' version='${version}'`
+    );
+  }
+  AssumptionMap.set(name, version);
+};
+
 Object.defineProperty(module.exports, '__HasPeerDepsInstalled', {
   enumerable: false,
   configurable: false,
@@ -197,4 +237,8 @@ Object.defineProperty(module.exports, '__HasPeerDepsInstalled', {
 
 module.exports._resetCache = function () {
   HasPeerDepsInstalled.clear();
+};
+
+module.exports._resetAssumptions = function () {
+  global[AssumptionMapName].clear();
 };
