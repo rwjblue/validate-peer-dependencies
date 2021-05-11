@@ -1,3 +1,17 @@
+## v2.0.0 (2021-05-11)
+
+#### :boom: Breaking Change
+* [#13](https://github.com/rwjblue/validate-peer-dependencies/pull/13) Drop support for node v10 ([@hjdivad](https://github.com/hjdivad))
+* [#12](https://github.com/rwjblue/validate-peer-dependencies/pull/12) Upgrades resolve-package-path to 4.0.0 ([@scalvert](https://github.com/scalvert))
+
+#### :house: Internal
+* [#10](https://github.com/rwjblue/validate-peer-dependencies/pull/10) Remove yarn.lock ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 3
+- David J. Hamilton ([@hjdivad](https://github.com/hjdivad))
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+- Steve Calvert ([@scalvert](https://github.com/scalvert))
+
 ## v1.2.0 (2021-04-01)
 
 #### :rocket: Enhancement
