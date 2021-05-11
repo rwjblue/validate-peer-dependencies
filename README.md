@@ -267,6 +267,10 @@ assumeProvided(require('./package.json'));
 
 Note that assumptions are global, since peer dependency validation may be occurring in different instances of `validate-peer-dependencies`.
 
+## Requirements
+
+[Active versions](https://nodejs.org/en/about/releases/) of Node are supported.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE.md).
