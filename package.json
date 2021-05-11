@@ -21,6 +21,9 @@
     "resolve-package-path": "^4.0.0",
     "semver": "^7.3.2"
   },
+  "engines": {
+    "node": ">= 12"
+  },
   "devDependencies": {
     "eslint": "^7.11.0",
     "eslint-config-prettier": "^6.13.0",
