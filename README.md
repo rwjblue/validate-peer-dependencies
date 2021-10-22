@@ -139,12 +139,14 @@ const validatePeerDependencies = require('validate-peer-dependencies');
 
 module.exports = {
   // ...snip...
-  init() {
-    this._super.init.apply(this, arguments);
+  included(parent) {
+    this._super.included.apply(this, arguments);
 
     validatePeerDependencies(__dirname, {
-      resolvePeerDependenciesFrom: this.parent.root,
+      resolvePeerDependenciesFrom: parent.root,
     });
+    
+    return parent;
   }
 };
 ```
