@@ -138,7 +138,9 @@ Here is an example of what usage by an ember-cli addon would look like:
 const validatePeerDependencies = require('validate-peer-dependencies');
 
 module.exports = {
-  // ...snip...
+  // Having the validation check in "included" hook allows the check to be done only when your addon is included in a 
+  //  build. It means that if consumer try to generate your addon blueprints, the validation check will not be triggered 
+  //  and the addon blueprints will be able to, if configured, automatically install required peerDependencies.
   included(parent) {
     this._super.included.apply(this, arguments);
 
