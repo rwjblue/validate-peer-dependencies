@@ -132,15 +132,32 @@ resolvable from `child`'s on disk location.
 
 Here is an example of what usage by an ember-cli addon would look like:
 
-```js
+```javascript
 'use strict';
 
 const validatePeerDependencies = require('validate-peer-dependencies');
 
 module.exports = {
-  // Having the validation check in "included" hook allows the check to be done only when your addon is included in a 
-  //  build. It means that if consumer try to generate your addon blueprints, the validation check will not be triggered 
-  //  and the addon blueprints will be able to, if configured, automatically install required peerDependencies.
+  // ...snip...
+  init() {
+    this._super.init.apply(this, arguments);
+
+    validatePeerDependencies(__dirname, {
+      resolvePeerDependenciesFrom: this.parent.root,
+    });
+  }
+};
+```
+
+Or alternatively, if it only makes sense for the addon to validate peer deps
+during a build, that would look like:
+
+```javascript
+'use strict';
+
+const validatePeerDependencies = require('validate-peer-dependencies');
+
+module.exports = {
   included(parent) {
     this._super.included.apply(this, arguments);
 
