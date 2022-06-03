@@ -132,7 +132,7 @@ resolvable from `child`'s on disk location.
 
 Here is an example of what usage by an ember-cli addon would look like:
 
-```js
+```javascript
 'use strict';
 
 const validatePeerDependencies = require('validate-peer-dependencies');
@@ -145,6 +145,27 @@ module.exports = {
     validatePeerDependencies(__dirname, {
       resolvePeerDependenciesFrom: this.parent.root,
     });
+  }
+};
+```
+
+Or alternatively, if it only makes sense for the addon to validate peer deps
+during a build, that would look like:
+
+```javascript
+'use strict';
+
+const validatePeerDependencies = require('validate-peer-dependencies');
+
+module.exports = {
+  included(parent) {
+    this._super.included.apply(this, arguments);
+
+    validatePeerDependencies(__dirname, {
+      resolvePeerDependenciesFrom: parent.root,
+    });
+    
+    return parent;
   }
 };
 ```
