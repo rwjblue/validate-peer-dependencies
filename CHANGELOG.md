@@ -1,3 +1,18 @@
+
+## v2.1.0 (2022-07-25)
+
+#### :rocket: Enhancement
+* [#16](https://github.com/rwjblue/validate-peer-dependencies/pull/16) Add typescript types ([@antonk52](https://github.com/antonk52))
+
+#### :memo: Documentation
+* [#15](https://github.com/rwjblue/validate-peer-dependencies/pull/15) docs: update ember-addon example ([@ndekeister-us](https://github.com/ndekeister-us))
+
+#### Committers: 3
+- Anton ([@antonk52](https://github.com/antonk52))
+- David J. Hamilton ([@hjdivad](https://github.com/hjdivad))
+- Nathanaël Dekeister ([@ndekeister-us](https://github.com/ndekeister-us))
+
+
 ## v2.0.0 (2021-05-11)
 
 #### :boom: Breaking Change
