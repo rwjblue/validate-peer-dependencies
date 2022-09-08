@@ -1,4 +1,7 @@
-const Project = require('fixturify-project');
+const { Project } = require('fixturify-project');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
 const validatePeerDependencies = require('./index');
 const { assumeProvided, _resetAssumptions } = validatePeerDependencies;
 
@@ -17,12 +20,12 @@ describe('validate-peer-dependencies', function () {
     process.chdir(ROOT);
   });
 
-  it('throws an error when peerDependencies are not present', () => {
+  it('throws an error when peerDependencies are not present', async () => {
     project.pkg.peerDependencies = {
       foo: '> 1',
     };
 
-    project.writeSync();
+    await project.write();
 
     expect(() => validatePeerDependencies(project.baseDir))
       .toThrowErrorMatchingInlineSnapshot(`
@@ -32,30 +35,30 @@ describe('validate-peer-dependencies', function () {
     `);
   });
 
-  it('throws an error when an entry is in peerDependencies **and** in dependencies', () => {
+  it('throws an error when an entry is in peerDependencies **and** in dependencies', async () => {
     project.pkg.peerDependencies = {
       foo: '>= 1',
     };
     project.addDependency('foo', '1.0.0');
-    project.writeSync();
+    await project.write();
 
-    process.chdir(project.root);
+    process.chdir(project.baseDir);
 
     expect(() => validatePeerDependencies(project.baseDir))
       .toThrowErrorMatchingInlineSnapshot(`
-      "test-app (at \`./test-app\`) is improperly configured:
+      "test-app (at \`./\`) is improperly configured:
 
       	* foo: included both as dependency and as a peer dependency"
     `);
   });
 
-  it('throws an error when peerDependencies are present but at the wrong version', () => {
+  it('throws an error when peerDependencies are present but at the wrong version', async () => {
     project.pkg.peerDependencies = {
       foo: '> 1',
     };
 
     project.addDevDependency('foo', '1.0.0');
-    project.writeSync();
+    await project.write();
 
     expect(() => validatePeerDependencies(project.baseDir))
       .toThrowErrorMatchingInlineSnapshot(`
@@ -65,7 +68,7 @@ describe('validate-peer-dependencies', function () {
     `);
   });
 
-  it('throws an error when peerDependencies that are optional are present but at the wrong version', () => {
+  it('throws an error when peerDependencies that are optional are present but at the wrong version', async () => {
     project.pkg.peerDependencies = {
       foo: '> 1',
     };
@@ -76,7 +79,7 @@ describe('validate-peer-dependencies', function () {
     };
 
     project.addDevDependency('foo', '1.0.0');
-    project.writeSync();
+    await project.write();
 
     expect(() => validatePeerDependencies(project.baseDir))
       .toThrowErrorMatchingInlineSnapshot(`
@@ -86,14 +89,14 @@ describe('validate-peer-dependencies', function () {
     `);
   });
 
-  it('throws if some peerDependencies are met and others are missing', () => {
+  it('throws if some peerDependencies are met and others are missing', async () => {
     project.pkg.peerDependencies = {
       foo: '> 1',
       bar: '>= 2',
     };
 
     project.addDevDependency('foo', '2.0.0');
-    project.writeSync();
+    await project.write();
 
     expect(() => validatePeerDependencies(project.baseDir))
       .toThrowErrorMatchingInlineSnapshot(`
@@ -103,7 +106,7 @@ describe('validate-peer-dependencies', function () {
     `);
   });
 
-  it('throws if some peerDependencies are met and others are on an unsupported version', () => {
+  it('throws if some peerDependencies are met and others are on an unsupported version', async () => {
     project.pkg.peerDependencies = {
       foo: '> 1',
       bar: '>= 2',
@@ -111,7 +114,7 @@ describe('validate-peer-dependencies', function () {
 
     project.addDevDependency('foo', '2.0.0');
     project.addDevDependency('bar', '1.0.0');
-    project.writeSync();
+    await project.write();
 
     expect(() => validatePeerDependencies(project.baseDir))
       .toThrowErrorMatchingInlineSnapshot(`
@@ -121,14 +124,14 @@ describe('validate-peer-dependencies', function () {
     `);
   });
 
-  it('throws when some peerDependencies are missing and some are outdated', () => {
+  it('throws when some peerDependencies are missing and some are outdated', async () => {
     project.pkg.peerDependencies = {
       foo: '> 1',
       bar: '>= 2',
     };
 
     project.addDevDependency('foo', '1.0.0');
-    project.writeSync();
+    await project.write();
 
     expect(() => validatePeerDependencies(project.baseDir))
       .toThrowErrorMatchingInlineSnapshot(`
@@ -139,18 +142,18 @@ describe('validate-peer-dependencies', function () {
     `);
   });
 
-  it('does not throw when peerDependencies are satisfied', () => {
+  it('does not throw when peerDependencies are satisfied', async () => {
     project.pkg.peerDependencies = {
       foo: '>= 1',
     };
 
     project.addDevDependency('foo', '1.0.0');
-    project.writeSync();
+    await project.write();
 
     validatePeerDependencies(project.baseDir);
   });
 
-  it('does not throw when peerDependencies are optional', () => {
+  it('does not throw when peerDependencies are optional', async () => {
     project.pkg.peerDependencies = {
       foo: '>= 1',
     };
@@ -161,20 +164,24 @@ describe('validate-peer-dependencies', function () {
       },
     };
 
-    project.writeSync();
+    await project.write();
 
     validatePeerDependencies(project.baseDir);
   });
 
-  it('errors with a helpful message when the provided project root does not contain a package.json', () => {
+  it('errors with a helpful message when the provided project root does not contain a package.json', async () => {
+    let tmpdir = await fs.promises.mkdtemp(
+      path.join(os.tmpdir(), 'fake-project-')
+    );
+
     expect(() => {
-      validatePeerDependencies(project.baseDir);
+      validatePeerDependencies(tmpdir);
     }).toThrowError(
-      `validate-peer-dependencies could not find a package.json when resolving upwards from:\n\t${project.baseDir}`
+      `validate-peer-dependencies could not find a package.json when resolving upwards from:\n\t${tmpdir}`
     );
   });
 
-  it('allows prerelease ranges that are greater than the specified set', () => {
+  it('allows prerelease ranges that are greater than the specified set', async () => {
     project.pkg.peerDependencies = {
       foo: '>= 1',
       bar: '^2.0.0',
@@ -182,23 +189,23 @@ describe('validate-peer-dependencies', function () {
 
     project.addDevDependency('foo', '1.1.0-beta.1');
     project.addDevDependency('bar', '2.1.0-alpha.1');
-    project.writeSync();
+    await project.write();
 
     validatePeerDependencies(project.baseDir);
   });
 
   describe('resolvePeerDependenciesFrom', () => {
-    it('when resolvePeerDependenciesFrom is provided the cached results are independent of usages without resolvePeerDependenciesFrom for the same parentRoot', () => {
+    it('when resolvePeerDependenciesFrom is provided the cached results are independent of usages without resolvePeerDependenciesFrom for the same parentRoot', async () => {
       let linkedPackage = new Project('foo');
 
       try {
         linkedPackage.pkg.peerDependencies = {
           bar: '^1.0.0',
         };
-        linkedPackage.writeSync();
+        await linkedPackage.write();
 
         project.addDevDependency('bar', '1.0.0');
-        project.writeSync();
+        await project.write();
 
         validatePeerDependencies(linkedPackage.baseDir, {
           resolvePeerDependenciesFrom: project.baseDir,
@@ -215,17 +222,17 @@ describe('validate-peer-dependencies', function () {
       }
     });
 
-    it('can provide custom base directory for peerDependency resolution (for linking situations)', () => {
+    it('can provide custom base directory for peerDependency resolution (for linking situations)', async () => {
       let linkedPackage = new Project('foo');
 
       try {
         linkedPackage.pkg.peerDependencies = {
           bar: '^1.0.0',
         };
-        linkedPackage.writeSync();
+        await linkedPackage.write();
 
         project.addDevDependency('bar', '1.0.0');
-        project.writeSync();
+        await project.write();
 
         validatePeerDependencies(linkedPackage.baseDir, {
           resolvePeerDependenciesFrom: project.baseDir,
@@ -237,49 +244,58 @@ describe('validate-peer-dependencies', function () {
   });
 
   describe('caching', () => {
-    it('caches failure to find package.json from parentRoot by default', () => {
+    it('caches failure to find package.json from parentRoot by default', async () => {
+      let tmpdir = await fs.promises.mkdtemp(
+        path.join(os.tmpdir(), 'fake-project-')
+      );
+
       expect(() => {
-        validatePeerDependencies(project.baseDir);
+        validatePeerDependencies(tmpdir);
       }).toThrowError(
-        `validate-peer-dependencies could not find a package.json when resolving upwards from:\n\t${project.baseDir}`
+        `validate-peer-dependencies could not find a package.json when resolving upwards from:\n\t${tmpdir}`
       );
     });
 
-    it('can prevent caching failure to find package.json from parentRoot with cache: false', () => {
+    it('can prevent caching failure to find package.json from parentRoot with cache: false', async () => {
+      let tmpdir = await fs.promises.mkdtemp(
+        path.join(os.tmpdir(), 'fake-project-')
+      );
+      project.baseDir = tmpdir;
+
       expect(() => {
         validatePeerDependencies(project.baseDir, { cache: false });
       }).toThrowError(
         `validate-peer-dependencies could not find a package.json when resolving upwards from:\n\t${project.baseDir}`
       );
 
-      project.writeSync();
+      await project.write();
       validatePeerDependencies(project.baseDir, { cache: false });
     });
 
-    it('caches succesfull results by default', () => {
+    it('caches succesfull results by default', async () => {
       project.pkg.peerDependencies = {
         foo: '>= 1',
       };
 
       project.addDevDependency('foo', '1.0.0');
-      project.writeSync();
+      await project.write();
 
       validatePeerDependencies(project.baseDir);
 
       // TODO: expose a public API to fixturify-project to remove deps/devDeps?
       delete project._devDependencies.foo;
-      project.writeSync();
+      await project.write();
 
       // does not error because it was cached
       validatePeerDependencies(project.baseDir);
     });
 
-    it('caches failures by default', () => {
+    it('caches failures by default', async () => {
       project.pkg.peerDependencies = {
         foo: '>= 1',
       };
 
-      project.writeSync();
+      await project.write();
 
       expect(() => validatePeerDependencies(project.baseDir))
         .toThrowErrorMatchingInlineSnapshot(`
@@ -289,7 +305,7 @@ describe('validate-peer-dependencies', function () {
       `);
 
       project.addDevDependency('foo', '1.0.0');
-      project.writeSync();
+      await project.write();
 
       expect(() => validatePeerDependencies(project.baseDir))
         .toThrowErrorMatchingInlineSnapshot(`
@@ -299,12 +315,12 @@ describe('validate-peer-dependencies', function () {
       `);
     });
 
-    it('can prevent caching by passing `cache: false` option', () => {
+    it('can prevent caching by passing `cache: false` option', async () => {
       project.pkg.peerDependencies = {
         foo: '>= 1',
       };
 
-      project.writeSync();
+      await project.write();
 
       expect(() =>
         validatePeerDependencies(project.baseDir, {
@@ -317,18 +333,18 @@ describe('validate-peer-dependencies', function () {
       `);
 
       project.addDevDependency('foo', '1.0.0');
-      project.writeSync();
+      await project.write();
 
       validatePeerDependencies(project.baseDir);
     });
 
-    it('provide its own cache', () => {
+    it('provide its own cache', async () => {
       let cache = new Map();
       project.pkg.peerDependencies = {
         foo: '>= 1',
       };
 
-      project.writeSync();
+      await project.write();
 
       expect(() =>
         validatePeerDependencies(project.baseDir, {
@@ -345,7 +361,7 @@ describe('validate-peer-dependencies', function () {
   });
 
   describe('handleFailure', () => {
-    it('provide its own handleFailure', () => {
+    it('provide its own handleFailure', async () => {
       expect.hasAssertions();
 
       project.pkg.peerDependencies = {
@@ -354,13 +370,13 @@ describe('validate-peer-dependencies', function () {
       };
 
       project.addDevDependency('bar', '1.0.0');
-      project.writeSync();
+      await project.write();
 
       validatePeerDependencies(project.baseDir, {
         handleFailure(result) {
           expect(result).toMatchInlineSnapshot(
             {
-              packagePath: expect.stringMatching('test-app/package.json'),
+              packagePath: expect.stringMatching('package.json'),
             },
             `
             Object {
@@ -377,7 +393,7 @@ describe('validate-peer-dependencies', function () {
                   "specifiedPeerDependencyRange": ">= 1",
                 },
               ],
-              "packagePath": StringMatching /test-app\\\\/package\\.json/,
+              "packagePath": StringMatching /package\\.json/,
               "pkg": Object {
                 "dependencies": Object {},
                 "devDependencies": Object {
@@ -414,7 +430,7 @@ describe('assumeProvided', function () {
     process.chdir(ROOT);
   });
 
-  it('throws if passed an object that lacks either name or version', function () {
+  it('throws if passed an object that lacks either name or version', async function () {
     expect(() => assumeProvided()).toThrowErrorMatchingInlineSnapshot(
       `"assumeProvided({ name, version}): name and version are required, but name='undefined' version='undefined'"`
     );
@@ -432,12 +448,12 @@ describe('assumeProvided', function () {
     );
   });
 
-  it('can be used to provide satisfy missing peer dependencies', function () {
+  it('can be used to provide satisfy missing peer dependencies', async function () {
     project.pkg.peerDependencies = {
       foo: '> 1',
     };
 
-    project.writeSync();
+    await project.write();
 
     expect(() => validatePeerDependencies(project.baseDir, { cache: false }))
       .toThrowErrorMatchingInlineSnapshot(`
@@ -455,12 +471,12 @@ describe('assumeProvided', function () {
     validatePeerDependencies(project.baseDir, { cache: false });
   });
 
-  it('uses the last value provided', function () {
+  it('uses the last value provided', async function () {
     project.pkg.peerDependencies = {
       foo: '> 1',
     };
 
-    project.writeSync();
+    await project.write();
 
     assumeProvided({
       name: 'foo',
@@ -475,13 +491,13 @@ describe('assumeProvided', function () {
     validatePeerDependencies(project.baseDir);
   });
 
-  it('supersedes resolution', function () {
+  it('supersedes resolution', async function () {
     project.pkg.peerDependencies = {
       foo: '>= 1',
     };
 
     project.addDevDependency('foo', '1.0.0');
-    project.writeSync();
+    await project.write();
 
     validatePeerDependencies(project.baseDir, { cache: false });
 
@@ -500,14 +516,14 @@ describe('assumeProvided', function () {
     `);
   });
 
-  it('does not prevent other peer dependencies from being validated', function () {
+  it('does not prevent other peer dependencies from being validated', async function () {
     project.pkg.peerDependencies = {
       foo: '>= 1',
       bar: '> 41',
     };
 
     project.addDevDependency('foo', '1.0.0');
-    project.writeSync();
+    await project.write();
 
     assumeProvided({
       name: 'bar',
