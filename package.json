@@ -21,8 +21,8 @@
     "test:jest": "jest"
   },
   "dependencies": {
-    "resolve-package-path": "^4.0.0",
-    "semver": "^7.3.2"
+    "resolve-package-path": "^4.0.3",
+    "semver": "^7.3.7"
   },
   "engines": {
     "node": ">= 12"
