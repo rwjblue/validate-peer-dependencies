@@ -288,6 +288,15 @@ assumeProvided(require('./package.json'));
 
 Note that assumptions are global, since peer dependency validation may be occurring in different instances of `validate-peer-dependencies`.
 
+### Disabling checks via Environment Variables
+
+It can be helpful to disable checks when doing certain kinds of testing (e.g. testing a pre-release with breaking changes to see whether any of the changes **actually* break a user).
+
+This can be done with the environment variables `VALIDATE_PEER_DEPENDENCIES` and `IGNORE_PEER_DEPENDENCIES`.
+
+* `VALIDATE_PEER_DEPENDENCIES=false` disables all validation.  Any other value is ignored
+* `IGNORE_PEER_DEPENDENCIES=foo,bar` disablesa peer dependency validatation for `foo` and `bar`
+
 ## Requirements
 
 [Active versions](https://nodejs.org/en/about/releases/) of Node are supported.
