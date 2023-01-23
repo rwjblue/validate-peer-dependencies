@@ -61,6 +61,14 @@ function resolvePackageVersion(
 }
 
 module.exports = function validatePeerDependencies(parentRoot, options = {}) {
+  if (
+    process.env.VALIDATE_PEER_DEPENDENCIES &&
+    process.env.VALIDATE_PEER_DEPENDENCIES.toLowerCase() === 'false'
+  ) {
+    // do not validate
+    return;
+  }
+
   let { cache, handleFailure, resolvePeerDependenciesFrom } = options;
 
   if (cache === false) {

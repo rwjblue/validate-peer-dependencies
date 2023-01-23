@@ -533,4 +533,21 @@ describe('assumeProvided', function () {
     // making assumptions about bar does not interfere with resolving foo
     validatePeerDependencies(project.baseDir, { cache: false });
   });
+
+  it('does not throw an error when peerDependencies are not present with process.env.VALIDATE_PEER_DEPENDENCIES=false', async () => {
+    try {
+      process.env.VALIDATE_PEER_DEPENDENCIES = 'false';
+
+      project.pkg.peerDependencies = {
+        foo: '> 1',
+      };
+
+      await project.write();
+
+      // should not throw an error
+      validatePeerDependencies(project.baseDir);
+    } finally {
+      delete process.env.VALIDATE_PEER_DEPENDENCIES;
+    }
+  });
 });
