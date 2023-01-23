@@ -61,6 +61,14 @@ function resolvePackageVersion(
 }
 
 module.exports = function validatePeerDependencies(parentRoot, options = {}) {
+  if (
+    process.env.VALIDATE_PEER_DEPENDENCIES &&
+    process.env.VALIDATE_PEER_DEPENDENCIES.toLowerCase() === 'false'
+  ) {
+    // do not validate
+    return;
+  }
+
   let { cache, handleFailure, resolvePeerDependenciesFrom } = options;
 
   if (cache === false) {
@@ -100,6 +108,10 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
     );
   }
 
+  let ignoredPeerDependencies = process.env.IGNORE_PEER_DEPENDENCIES
+    ? new Set(process.env.IGNORE_PEER_DEPENDENCIES.split(','))
+    : new Set();
+
   let pkg = require(packagePath);
   let { dependencies, peerDependencies, peerDependenciesMeta } = pkg;
   let hasDependencies = Boolean(dependencies);
@@ -120,6 +132,10 @@ module.exports = function validatePeerDependencies(parentRoot, options = {}) {
         name: packageName,
         reason: 'included both as dependency and as a peer dependency',
       });
+    }
+
+    if (ignoredPeerDependencies.has(packageName)) {
+      continue;
     }
 
     //   foo-package: >= 1.9.0 < 2.0.0

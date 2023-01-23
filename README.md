@@ -277,7 +277,7 @@ It is sometimes desirable to treat a peer dependency as satisfied even when it w
 For example an ember addon may consider itself to satisfy the peer dependency requirements of one of its own dev dependencies during local development.
 
 ```js
-const assumeProvided = require('validate-peer-depencies').assumeProvided;
+const assumeProvided = require('validate-peer-dependencies').assumeProvided;
 
 // subsequent calls to validatePeerDependencies will assume some-package is available and will resolve to version 1.2.3
 assumeProvided({ name: 'some-package', version: '1.2.3' });
@@ -287,6 +287,15 @@ assumeProvided(require('./package.json'));
 ```
 
 Note that assumptions are global, since peer dependency validation may be occurring in different instances of `validate-peer-dependencies`.
+
+### Disabling checks via Environment Variables
+
+It can be helpful to disable checks when doing certain kinds of testing (e.g. testing a pre-release with breaking changes to see whether any of the changes **actually* break a user).
+
+This can be done with the environment variables `VALIDATE_PEER_DEPENDENCIES` and `IGNORE_PEER_DEPENDENCIES`.
+
+* `VALIDATE_PEER_DEPENDENCIES=false` disables all validation.  Any other value is ignored
+* `IGNORE_PEER_DEPENDENCIES=foo,bar` disablesa peer dependency validatation for `foo` and `bar`
 
 ## Requirements
 
