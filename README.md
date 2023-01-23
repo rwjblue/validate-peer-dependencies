@@ -277,7 +277,7 @@ It is sometimes desirable to treat a peer dependency as satisfied even when it w
 For example an ember addon may consider itself to satisfy the peer dependency requirements of one of its own dev dependencies during local development.
 
 ```js
-const assumeProvided = require('validate-peer-depencies').assumeProvided;
+const assumeProvided = require('validate-peer-dependencies').assumeProvided;
 
 // subsequent calls to validatePeerDependencies will assume some-package is available and will resolve to version 1.2.3
 assumeProvided({ name: 'some-package', version: '1.2.3' });
