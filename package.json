@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "validate-peer-dependencies",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Validate that the peerDependencies of a given package.json have been satisfied.",
   "repository": {
     "type": "git",

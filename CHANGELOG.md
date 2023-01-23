@@ -1,4 +1,20 @@
 
+
+## v2.2.0 (2023-01-23)
+
+#### :rocket: Enhancement
+* [#24](https://github.com/rwjblue/validate-peer-dependencies/pull/24) Add environment variables for overrides ([@rwjblue](https://github.com/rwjblue))
+
+#### :house: Internal
+* [#23](https://github.com/rwjblue/validate-peer-dependencies/pull/23) Update release-it and lerna-changelog generation ([@rwjblue](https://github.com/rwjblue))
+* [#22](https://github.com/rwjblue/validate-peer-dependencies/pull/22) Update in range deps/devDeps ([@rwjblue](https://github.com/rwjblue))
+* [#21](https://github.com/rwjblue/validate-peer-dependencies/pull/21) Update fixturify-project to latest ([@rwjblue](https://github.com/rwjblue))
+* [#19](https://github.com/rwjblue/validate-peer-dependencies/pull/19) Update linting related devDependencies ([@rwjblue](https://github.com/rwjblue))
+* [#18](https://github.com/rwjblue/validate-peer-dependencies/pull/18) Update dependencies to latest ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
 ## v2.1.0 (2022-07-25)
 
 #### :rocket: Enhancement
